@@ -14,6 +14,9 @@ async fn main() -> Result<()> {
     let config = Config::load()?;
     let database = Database::builder().initialize().await?;
     let state = Arc::new(ApiState { database });
-    Api::new(config.api, state).initialize().launch().await?;
+    Api::new(config.api)
+        .initialize(routes::router(state))
+        .launch()
+        .await?;
     Ok(())
 }

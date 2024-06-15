@@ -1,28 +1,26 @@
 use axum::Router;
 use eyre::Result;
-use std::{net::SocketAddr, sync::Arc};
+use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::{config::ApiConfig, database::Database, routes};
+use crate::{config::ApiConfig, database::Database};
 
 pub(crate) struct Api {
     router: Router,
-    state: Arc<ApiState>,
     config: ApiConfig,
 }
 
 impl Api {
-    pub(crate) fn new(config: ApiConfig, state: Arc<ApiState>) -> Self {
+    pub(crate) fn new(config: ApiConfig) -> Self {
         Self {
             router: Router::new(),
-            state,
             config,
         }
     }
 
-    pub(crate) fn initialize(mut self) -> Self {
+    pub(crate) fn initialize(mut self, router: Router) -> Self {
         tracing_subscriber::registry()
             .with(
                 tracing_subscriber::EnvFilter::try_from_default_env()
@@ -31,7 +29,7 @@ impl Api {
             .with(tracing_subscriber::fmt::layer())
             .init();
 
-        self.router = routes::router(self.state.clone()).layer(TraceLayer::new_for_http());
+        self.router = router.layer(TraceLayer::new_for_http());
         self
     }
 
